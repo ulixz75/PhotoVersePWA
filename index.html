@@ -264,6 +264,11 @@
         return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
       }
       
+      // Detectar si es Desktop
+      function isDesktop() {
+        return !(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+      }
+      
       // Detectar si ya está instalada
       function isInStandaloneMode() {
         return (window.matchMedia('(display-mode: standalone)').matches) || 
@@ -273,12 +278,15 @@
       
       // Mostrar botón si no está instalada
       if (!isInStandaloneMode()) {
-        // Para Android/Chrome/Edge
+        let promptShown = false;
+        
+        // Para Android/Chrome/Edge/Desktop
         window.addEventListener('beforeinstallprompt', (e) => {
           e.preventDefault();
           deferredPrompt = e;
           installContainer.style.display = 'block';
-          console.log('✅ PWA instalable detectada');
+          promptShown = true;
+          console.log('✅ PWA instalable detectada (beforeinstallprompt)');
         });
         
         // Para iOS - mostrar siempre el botón
@@ -287,13 +295,24 @@
           console.log('📱 iOS detectado - mostrando botón de instalación');
         }
         
+        // Para Desktop - mostrar después de 3 segundos si no se disparó el evento
+        // Esto ayuda en caso de que Chrome no dispare beforeinstallprompt
+        if (isDesktop() && !isIOS()) {
+          setTimeout(() => {
+            if (!promptShown) {
+              installContainer.style.display = 'block';
+              console.log('🖥️ Desktop detectado - mostrando botón de instalación');
+            }
+          }, 3000);
+        }
+        
         // Manejar click en el botón
         installBtn.addEventListener('click', async () => {
           if (isIOS()) {
             // Mostrar instrucciones para iOS
             iosModal.style.display = 'flex';
           } else if (deferredPrompt) {
-            // Instalar en Android/Chrome
+            // Instalar en Android/Chrome/Desktop con prompt nativo
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             console.log(`Usuario ${outcome === 'accepted' ? 'aceptó' : 'rechazó'} la instalación`);
@@ -302,6 +321,13 @@
               installContainer.style.display = 'none';
             }
             deferredPrompt = null;
+          } else {
+            // Fallback: si no hay prompt nativo, mostrar instrucciones
+            alert('Para instalar esta app:\n\n' +
+                  '1. Haz clic en el ícono 💻 en la barra de direcciones (junto a la estrella de favoritos)\n' +
+                  '2. O ve al menú de Chrome (⋮) → "Instalar PhotoVerse..."\n' +
+                  '3. O presiona Ctrl+Shift+I y ve a Application → Manifest');
+            console.log('ℹ️ Prompt nativo no disponible, mostrando instrucciones');
           }
         });
         
