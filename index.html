@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/616/616408.png" />
-
     <title>Poesía de Fotos</title>
     
     <!-- PWA Configuration -->
@@ -12,11 +11,13 @@
     <meta name="theme-color" content="#14B8A6" />
     <link rel="apple-touch-icon" href="/icon-192x192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
-
+    <meta name="mobile-web-app-capable" content="yes">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <script>
       tailwind.config = {
         theme: {
@@ -37,8 +38,6 @@
               'text-light': '#4B5563',
               'shadow-dark': '#0F766E',
               'shadow-light': '#5EEAD4',
-              
-              // Card specific colors from user image
               'card-blue': '#93C5FD',
               'card-green': '#A7F3D0',
               'card-yellow': '#FDE047',
@@ -60,35 +59,295 @@
         }
       }
     </script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0",
-    "react/": "https://aistudiocdn.com/react@^19.1.1/",
-    "react": "https://aistudiocdn.com/react@^19.1.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.544.0"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
-</head>
+    
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0",
+        "react/": "https://aistudiocdn.com/react@^19.1.1/",
+        "react": "https://aistudiocdn.com/react-dom@^19.1.1/",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+        "lucide-react": "https://aistudiocdn.com/lucide-react@^0.544.0"
+      }
+    }
+    </script>
+    
+    <link rel="stylesheet" href="/index.css">
+    
+    <style>
+      /* Estilos para el botón de instalación */
+      #pwa-install-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        left: 20px;
+        max-width: 400px;
+        margin: 0 auto;
+        z-index: 9999;
+        animation: slideUp 0.4s ease-out;
+      }
+      
+      @keyframes slideUp {
+        from {
+          transform: translateY(100px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+      
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+      
+      .pulse-animation {
+        animation: pulse 2s infinite;
+      }
+      
+      #pwa-install-btn {
+        width: 100%;
+        background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
+        box-shadow: 0 10px 25px rgba(20, 184, 166, 0.4), 
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 16px 24px;
+        border-radius: 16px;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 700;
+        color: white;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      #pwa-install-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(20, 184, 166, 0.5),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      }
+      
+      #pwa-install-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 5px 15px rgba(20, 184, 166, 0.3);
+      }
+      
+      .ios-instructions {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(10px);
+        border: 2px solid #14B8A6;
+      }
+      
+      /* Optimización para móviles */
+      @media (max-width: 640px) {
+        #pwa-install-container {
+          bottom: 16px;
+          right: 16px;
+          left: 16px;
+          max-width: none;
+        }
+        
+        #pwa-install-btn {
+          padding: 14px 20px;
+          font-size: 15px;
+          border-radius: 14px;
+          gap: 10px;
+        }
+        
+        #pwa-install-btn svg {
+          width: 20px;
+          height: 20px;
+        }
+      }
+      
+      /* Optimización para pantallas muy pequeñas */
+      @media (max-width: 380px) {
+        #pwa-install-container {
+          bottom: 12px;
+          right: 12px;
+          left: 12px;
+        }
+        
+        #pwa-install-btn {
+          padding: 12px 16px;
+          font-size: 14px;
+          border-radius: 12px;
+          gap: 8px;
+        }
+        
+        #pwa-install-btn svg {
+          width: 18px;
+          height: 18px;
+        }
+      }
+      
+      /* Desktop: mantener a la derecha */
+      @media (min-width: 641px) {
+        #pwa-install-container {
+          left: auto;
+          right: 20px;
+          max-width: 260px;
+        }
+        
+        #pwa-install-btn {
+          font-size: 15px;
+        }
+      }
+    </style>
+  </head>
   <body class="bg-main-teal">
     <div id="root"></div>
+    
+    <!-- Botón de instalación PWA -->
+    <div id="pwa-install-container" style="display: none;">
+      <button 
+        id="pwa-install-btn"
+        aria-label="Instalar aplicación"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span>Instalar App</span>
+      </button>
+    </div>
+    
+    <!-- Modal para iOS -->
+    <div id="ios-install-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center; padding: 20px;">
+      <div class="ios-instructions rounded-3xl p-6 max-w-md mx-auto shadow-2xl">
+        <div class="flex justify-between items-start mb-4">
+          <h3 class="text-2xl font-bold text-gray-800">Instalar en iOS</h3>
+          <button id="close-ios-modal" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+        </div>
+        <div class="space-y-4 text-gray-700">
+          <p class="font-semibold">Para instalar esta app en tu iPhone/iPad:</p>
+          <ol class="space-y-3 list-decimal list-inside">
+            <li class="flex items-start gap-2">
+              <span class="flex-1">Toca el botón de <strong>Compartir</strong> 
+                <svg class="inline w-5 h-5 mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                </svg>
+                en la barra inferior de Safari
+              </span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="flex-1">Desplázate y selecciona <strong>"Añadir a pantalla de inicio"</strong>
+                <svg class="inline w-5 h-5 mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+              </span>
+            </li>
+            <li>Toca <strong>"Añadir"</strong> en la esquina superior derecha</li>
+          </ol>
+          <p class="text-sm text-gray-600 mt-4 bg-teal-50 p-3 rounded-lg">
+            💡 La app aparecerá en tu pantalla de inicio como cualquier otra aplicación
+          </p>
+        </div>
+      </div>
+    </div>
+    
     <script type="module" src="/index.tsx"></script>
-   <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then(registration => {
-          console.log('✅ SW registrado:', registration.scope);
-        })
-        .catch(error => {
-          console.error('❌ SW falló:', error);
+    
+    <script>
+      // PWA Install Manager
+      let deferredPrompt;
+      const installContainer = document.getElementById('pwa-install-container');
+      const installBtn = document.getElementById('pwa-install-btn');
+      const iosModal = document.getElementById('ios-install-modal');
+      const closeModalBtn = document.getElementById('close-ios-modal');
+      
+      // Detectar si es iOS
+      function isIOS() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      }
+      
+      // Detectar si ya está instalada
+      function isInStandaloneMode() {
+        return (window.matchMedia('(display-mode: standalone)').matches) || 
+               (window.navigator.standalone) || 
+               document.referrer.includes('android-app://');
+      }
+      
+      // Mostrar botón si no está instalada
+      if (!isInStandaloneMode()) {
+        // Para Android/Chrome/Edge
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          deferredPrompt = e;
+          installContainer.style.display = 'block';
+          console.log('✅ PWA instalable detectada');
         });
-    });
-  }
-</script>
+        
+        // Para iOS - mostrar siempre el botón
+        if (isIOS()) {
+          installContainer.style.display = 'block';
+          console.log('📱 iOS detectado - mostrando botón de instalación');
+        }
+        
+        // Manejar click en el botón
+        installBtn.addEventListener('click', async () => {
+          if (isIOS()) {
+            // Mostrar instrucciones para iOS
+            iosModal.style.display = 'flex';
+          } else if (deferredPrompt) {
+            // Instalar en Android/Chrome
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`Usuario ${outcome === 'accepted' ? 'aceptó' : 'rechazó'} la instalación`);
+            
+            if (outcome === 'accepted') {
+              installContainer.style.display = 'none';
+            }
+            deferredPrompt = null;
+          }
+        });
+        
+        // Cerrar modal iOS
+        closeModalBtn.addEventListener('click', () => {
+          iosModal.style.display = 'none';
+        });
+        
+        iosModal.addEventListener('click', (e) => {
+          if (e.target === iosModal) {
+            iosModal.style.display = 'none';
+          }
+        });
+      } else {
+        console.log('✅ App ya instalada');
+      }
+      
+      // Registrar Service Worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(registration => {
+              console.log('✅ SW registrado:', registration.scope);
+            })
+            .catch(error => {
+              console.error('❌ SW falló:', error);
+            });
+        });
+      }
+      
+      // Ocultar botón cuando se instala
+      window.addEventListener('appinstalled', () => {
+        console.log('✅ PWA instalada correctamente');
+        installContainer.style.display = 'none';
+      });
+    </script>
   </body>
 </html>
