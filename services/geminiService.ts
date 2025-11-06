@@ -16,10 +16,17 @@ export const generatePoemFromImage = async (
 ): Promise<Poem> => {
   const langInstruction = language === 'es' ? 'español' : 'inglés';
   
-  const prompt = `Analiza esta imagen y crea un poema original en ${langInstruction} con un título.
+ const prompt = `Analiza esta imagen y crea un poema original en ${langInstruction} con un título.
 - Estilo poético: ${style}.
 - Tono emocional: ${mood}.
-- Estructura: El poema debe tener entre 2 y 4 estrofas. Cada estrofa debe tener un máximo de 6 líneas.
+- Estructura: El poema debe tener entre 2 y 4 estrofas. Cada estrofa debe tener entre 4 y 6 versos.
+- RIMA: Es FUNDAMENTAL que el poema tenga una rima consistente y armoniosa. Usa uno de estos esquemas de rima:
+  * ABAB (riman el 1º con 3º y 2º con 4º verso)
+  * AABB (riman versos consecutivos: 1º-2º, 3º-4º)
+  * ABBA (rima abrazada)
+  * ABCB (riman solo los versos pares)
+- MÉTRICA: Intenta mantener un número similar de sílabas en cada verso (entre 8-11 sílabas) para dar ritmo al poema.
+- Las rimas deben ser naturales, no forzadas. Prioriza la calidad de la rima consonante (coinciden vocal y consonante desde la última vocal acentuada).
 - Responde únicamente en formato JSON con una clave "title" para el título y una clave "poem" para el poema (el poema debe usar '\\n' para los saltos de línea y '\\n\\n' para separar estrofas).`;
 
   const imagePart = {
