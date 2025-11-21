@@ -5,6 +5,7 @@ import SplashScreen from './components/SplashScreen';
 import UploadScreen from './components/UploadScreen';
 import ProcessingScreen from './components/ProcessingScreen';
 import ResultScreen from './components/ResultScreen';
+import GalleryScreen from './components/GalleryScreen';
 import { generatePoemFromImage } from './services/geminiService';
 
 // Declara la API de comunicación con el Servicio de Delegación
@@ -159,6 +160,7 @@ const App: React.FC = () => {
         return (
           <UploadScreen
             onGenerate={handlePoemGeneration}
+            onViewGallery={() => setScreen(Screen.GALLERY)}
             imageData={imageData}
             setImageData={setImageData}
             selectedStyle={selectedStyle}
@@ -176,6 +178,8 @@ const App: React.FC = () => {
         return <ProcessingScreen language={language} />;
       case Screen.RESULT:
         return <ResultScreen poem={poem} image={imageData?.url} onReset={handleReset} authorName={authorName} language={language} />;
+      case Screen.GALLERY:
+        return <GalleryScreen onBack={() => setScreen(Screen.UPLOAD)} language={language} />;
       default:
         return <SplashScreen language={language} />;
     }
