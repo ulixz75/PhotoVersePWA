@@ -81,6 +81,10 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ poem, image, onReset, autho
           text: getFullPoemText(),
         });
       } catch (error) {
+        // Ignore AbortError which happens when user cancels the share dialog
+        if (error instanceof Error && error.name === 'AbortError') {
+            return;
+        }
         console.error('Error sharing:', error);
       }
     } else {
