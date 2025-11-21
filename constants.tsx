@@ -28,3 +28,39 @@ export const POEM_MOODS: SelectionOption[] = [
   { id: PoemMood.Aventura, label: { es: 'Aventura', en: 'Adventure' }, icon: <Mountain size={24} />, ...cardColors[1] },
   { id: PoemMood.Serenidad, label: { es: 'Serenidad', en: 'Serenity' }, icon: <Sun size={24} />, ...cardColors[2] },
 ];
+
+export const GALLERY_EXAMPLES = [
+  {
+    id: 1,
+    imageUrl: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+    style: PoemStyle.Haiku,
+    mood: PoemMood.Serenidad,
+    poem: {
+      title: "Niebla Matutina",
+      poem: "Montañas grises,\nel silencio se extiende,\npaz en el alma."
+    },
+    author: "AI Poet"
+  },
+  {
+    id: 2,
+    imageUrl: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+    style: PoemStyle.VersoLibre,
+    mood: PoemMood.Celebracion,
+    poem: {
+      title: "Luces de Fiesta",
+      poem: "Brillos que danzan en la noche,\nrisas compartidas,\nun instante eterno de alegría que nunca termina."
+    },
+    author: "AI Poet"
+  },
+  {
+    id: 3,
+    imageUrl: 'https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+    style: PoemStyle.Soneto,
+    mood: PoemMood.Aventura,
+    poem: {
+      title: "El Pug Explorador",
+      poem: "Pequeño guardián de mirada atenta,\ncamina seguro por el sendero verde,\nbuscando misterios que el bosque pierde,\nen cada rincón que su paso inventa."
+    },
+    author: "AI Poet"
+  }
+];
