@@ -5,6 +5,7 @@ export enum Screen {
   UPLOAD,
   PROCESSING,
   RESULT,
+  GALLERY,
 }
 
 export enum PoemStyle {
@@ -23,6 +24,12 @@ export enum PoemMood {
   Amor = 'Amor',
   Aventura = 'Aventura',
   Serenidad = 'Serenidad',
+}
+
+export enum ShareTemplate {
+  Story = 'Story',
+  Square = 'Square',
+  Polaroid = 'Polaroid',
 }
 
 export type Language = 'es' | 'en';
