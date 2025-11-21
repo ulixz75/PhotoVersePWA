@@ -3,11 +3,12 @@ import { PoemStyle, PoemMood, Language } from '../types';
 import { POEM_STYLES, POEM_MOODS } from '../constants';
 import ClayButton from './ClayButton';
 import SelectionCard from './SelectionCard';
-import { ImageUp, Camera, X } from 'lucide-react';
+import { ImageUp, Camera, X, Sparkles } from 'lucide-react';
 import { t } from '../translations';
 
 interface UploadScreenProps {
   onGenerate: () => void;
+  onViewGallery: () => void;
   imageData: { url: string } | null;
   setImageData: (data: { url: string; base64: string; mimeType: string; } | null) => void;
   selectedStyle: PoemStyle | null;
@@ -27,6 +28,7 @@ const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
 const UploadScreen: React.FC<UploadScreenProps> = ({
   onGenerate,
+  onViewGallery,
   imageData,
   setImageData,
   selectedStyle,
@@ -82,10 +84,11 @@ const UploadScreen: React.FC<UploadScreenProps> = ({
                   </button>
                 </div>
               ) : (
-                <div className="w-full aspect-[4/3] rounded-4xl bg-main-teal shadow-clay-sm-inset flex flex-col items-center justify-center p-4 text-center">
+                <div className="w-full aspect-[4/3] rounded-4xl bg-main-teal shadow-clay-sm-inset flex flex-col items-center justify-center p-4 text-center relative overflow-hidden">
                   <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
                   <input type="file" accept="image/*" capture="user" ref={cameraInputRef} onChange={handleFileChange} className="hidden" />
-                  <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                  
+                  <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 z-10">
                       <ClayButton onClick={() => fileInputRef.current?.click()} fullWidth={false}>
                           <ImageUp className="mr-2" size={20}/> {t.gallery[language]}
                       </ClayButton>
@@ -93,7 +96,17 @@ const UploadScreen: React.FC<UploadScreenProps> = ({
                           <Camera className="mr-2" size={20}/> {t.camera[language]}
                       </ClayButton>
                   </div>
-                  <p className="text-surface/80 mt-4 text-sm">{t.selectOrTakePhoto[language]}</p>
+                  <p className="text-surface/80 mt-4 text-sm z-10">{t.selectOrTakePhoto[language]}</p>
+
+                  <div className="mt-8 z-10">
+                    <button 
+                        onClick={onViewGallery}
+                        className="flex items-center gap-2 px-5 py-2 bg-white/10 rounded-full text-surface text-sm font-semibold hover:bg-white/20 transition-colors border border-white/20"
+                    >
+                        <Sparkles size={16} className="text-accent" />
+                        {t.viewGallery[language]}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
