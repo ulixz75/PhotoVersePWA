@@ -1,10 +1,9 @@
-const CACHE_NAME = 'photoverse-cache-v4'; // Bump version to ensure update
+const CACHE_NAME = 'photoverse-cache-v5'; // Bump version to ensure update
 const URLS_TO_CACHE = [
   // App Shell
   '/',
   '/index.html',
   '/manifest.json',
-
   // Icons
   '/icon-48x48.png',
   '/icon-72x72.png',
@@ -29,7 +28,6 @@ const URLS_TO_CACHE = [
   '/components/ResultScreen.tsx',
   '/components/ClayButton.tsx',
   '/components/SelectionCard.tsx',
-
   // CDN Resources
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap',
@@ -40,21 +38,28 @@ const URLS_TO_CACHE = [
   'https://aistudiocdn.com/lucide-react@^0.544.0'
 ];
 
-// Instala el service worker y cachea los recursos principales de la aplicación.
+// Instala el service worker y cachea los recursos principales de la aplicación
 self.addEventListener('install', event => {
+  console.log('[SW] Installing service worker...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Opened cache');
+        console.log('[SW] Caching app shell');
         return cache.addAll(URLS_TO_CACHE);
       })
-      .then(() => self.skipWaiting()) // Force activation
+      .then(() => {
+        console.log('[SW] Cache populated, skipping waiting');
+        return self.skipWaiting();
+      })
+      .catch(error => {
+        console.error('[SW] Installation failed:', error);
+      })
   );
 });
 
-// Intercepta las peticiones de red y responde con los recursos cacheados si están disponibles.
+// Intercepta las peticiones de red y responde con los recursos cacheados si están disponibles
 self.addEventListener('fetch', event => {
-  // We only want to cache GET requests.
+  // Solo cachear peticiones GET
   if (event.request.method !== 'GET') {
     return;
   }
@@ -62,59 +67,90 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Cache hit - return response
         if (response) {
+          // Cache hit - retornar respuesta cacheada
           return response;
         }
-
-        // Not in cache - fetch from network
-        return fetch(event.request).then(
-          networkResponse => {
-            // Check if we received a valid response
-            if (!networkResponse || networkResponse.status !== 200) {
+        
+        // No está en cache - obtener de red
+        return fetch(event.request)
+          .then(networkResponse => {
+            // Verificar respuesta válida
+            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type === 'error') {
               return networkResponse;
             }
             
-            // IMPORTANT: Clone the response. A response is a stream
-            // and because we want the browser to consume the response
-            // as well as the cache consuming the response, we need
-            // to clone it so we have two streams.
+            // Clonar la respuesta
             const responseToCache = networkResponse.clone();
-
+            
+            // Cachear la respuesta (sin bloquear)
             caches.open(CACHE_NAME)
               .then(cache => {
-                // We don't cache calls to the Gemini API
-                if (!event.request.url.includes('generativelanguage')) {
-                    cache.put(event.request, responseToCache);
+                // No cachear llamadas a APIs externas
+                if (!event.request.url.includes('generativelanguage') &&
+                    !event.request.url.includes('github')) {
+                  cache.put(event.request, responseToCache);
                 }
+              })
+              .catch(error => {
+                // Silenciar errores de cache (extensiones pueden interferir)
+                console.log('[SW] Cache put failed (expected with extensions):', error.message);
               });
-
+            
             return networkResponse;
-          }
-        ).catch(error => {
-            // This is a simplified offline fallback. 
-            // You might want to return a custom offline page here.
-            console.error('Fetching failed:', error);
+          })
+          .catch(error => {
+            console.error('[SW] Fetch failed:', error);
+            // Podrías retornar una página offline personalizada aquí
             throw error;
-        });
+          });
       })
   );
 });
 
-
-// Activa el service worker y elimina cachés antiguas para mantener la aplicación actualizada.
+// Activa el service worker y elimina cachés antiguas
 self.addEventListener('activate', event => {
+  console.log('[SW] Activating service worker...');
   const cacheWhitelist = [CACHE_NAME];
+  
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => self.clients.claim()) // Take control of all pages
+    caches.keys()
+      .then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            if (!cacheWhitelist.includes(cacheName)) {
+              console.log('[SW] Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+      .then(() => {
+        console.log('[SW] Service worker activated, claiming clients');
+        return self.clients.claim();
+      })
+      .catch(error => {
+        console.error('[SW] Activation failed:', error);
+      })
   );
+});
+
+// Manejar mensajes (prevenir errores de extensiones)
+self.addEventListener('message', event => {
+  try {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+      self.skipWaiting();
+    }
+  } catch (error) {
+    console.log('[SW] Message handling error (expected with extensions):', error.message);
+  }
+});
+
+// Prevenir errores no manejados
+self.addEventListener('error', event => {
+  console.error('[SW] Error:', event.error);
+});
+
+self.addEventListener('unhandledrejection', event => {
+  console.error('[SW] Unhandled rejection:', event.reason);
 });
