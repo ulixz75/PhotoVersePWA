@@ -11,8 +11,12 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
+        // Gemini API Key (Primary)
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+        
+        // Anthropic API Key (Fallback)
+        'process.env.ANTHROPIC_API_KEY': JSON.stringify(env.ANTHROPIC_API_KEY)
       },
       resolve: {
         alias: {
