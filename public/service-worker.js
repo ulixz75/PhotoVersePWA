@@ -1,4 +1,4 @@
-const CACHE_NAME = 'photoverse-cache-v5'; // Bump version to ensure update
+const CACHE_NAME = 'photoverse-cache-v5';
 const URLS_TO_CACHE = [
   // App Shell
   '/',
@@ -28,6 +28,7 @@ const URLS_TO_CACHE = [
   '/components/ResultScreen.tsx',
   '/components/ClayButton.tsx',
   '/components/SelectionCard.tsx',
+  '/components/GalleryScreen.tsx',
   // CDN Resources
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap',
@@ -86,8 +87,9 @@ self.addEventListener('fetch', event => {
             // Cachear la respuesta (sin bloquear)
             caches.open(CACHE_NAME)
               .then(cache => {
-                // No cachear llamadas a APIs externas
+                // No cachear llamadas a APIs externas o sospechosas
                 if (!event.request.url.includes('generativelanguage') &&
+                    !event.request.url.includes('shoukigaigoors') && 
                     !event.request.url.includes('github')) {
                   cache.put(event.request, responseToCache);
                 }
@@ -101,7 +103,6 @@ self.addEventListener('fetch', event => {
           })
           .catch(error => {
             console.error('[SW] Fetch failed:', error);
-            // Podrías retornar una página offline personalizada aquí
             throw error;
           });
       })
