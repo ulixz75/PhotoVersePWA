@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import './App.css'; // Asegúrate de que esta ruta sea correcta
+import './App.css';
 import { Screen, PoemStyle, PoemMood, Poem, Language } from './types';
 import SplashScreen from './components/SplashScreen';
 import UploadScreen from './components/UploadScreen';
 import ProcessingScreen from './components/ProcessingScreen';
 import ResultScreen from './components/ResultScreen';
 import GalleryScreen from './components/GalleryScreen';
-import { generatePoemFromImage } from './services/geminiService';
+import { generatePoemFromImage } from './services/poemGenerationService'; // ⬅️ CAMBIADO
 
 // Declara la API de comunicación con el Servicio de Delegación
 declare global {
@@ -44,7 +44,7 @@ const App: React.FC = () => {
 
     // Handle return from ad using redirect method
     if (urlParams.get('adRewarded') === 'true') {
-      console.log('Volviendo del anuncio recompensado'); // Log del script del usuario
+      console.log('Volviendo del anuncio recompensado');
       const savedState = sessionStorage.getItem('poemState');
       if (savedState) {
         try {
@@ -93,7 +93,7 @@ const App: React.FC = () => {
         setScreen(Screen.UPLOAD);
       }
     }
-  }, []); // Run only once on mount
+  }, []);
 
   const executePoemGeneration = useCallback(async () => {
     if (!imageData || !selectedStyle || !selectedMood) {
@@ -125,16 +125,13 @@ const App: React.FC = () => {
       sessionStorage.setItem('poemState', JSON.stringify(stateToSave));
       
       const appBaseUrl = 'https://photoverse-app-265715129860.us-west1.run.app';
-      // URL a la que volveremos después del anuncio (de acuerdo al script del usuario)
       const returnUrlRaw = `${appBaseUrl}/create?adRewarded=true`;
       const returnUrl = encodeURIComponent(returnUrlRaw);
       
-      // URL callback que la TWA interceptará para mostrar el anuncio
       const callback = `${appBaseUrl}/.well-known/twa-callbacks/showRewardAd?returnUrl=${returnUrl}`;
       
-      console.log('Navegando a:', callback); // para debug
+      console.log('Navegando a:', callback);
       
-      // Navegar a la URL callback (esto será interceptado por la TWA)
       window.location.href = callback;
     } else {
       console.log("No estamos en TWA. Generando poema directamente.");
