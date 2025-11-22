@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { jsPDF } from 'jspdf';
 import ClayButton from './ClayButton';
-import { Copy, RefreshCw, Download, Share2, Smartphone, Square, Image as ImageIcon, FileText } from 'lucide-react';
+import { Copy, RefreshCw, Download, Share2, Smartphone, Square, Image as ImageIcon } from 'lucide-react';
 import { Poem, Language, ShareTemplate } from '../types';
 import { t } from '../translations';
 
@@ -438,71 +437,6 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ poem, image, onReset, autho
     }
   };
 
-  const handleDownloadPdf = async () => {
-    if (!poem || !image) return;
-    setIsDownloading(true);
-
-    try {
-      const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 20;
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(22);
-      doc.text("Photo Verse", pageWidth / 2, 25, { align: "center" });
-      
-      const img = await loadImage(image);
-      
-      // Detect Format
-      let imgFormat = 'JPEG';
-      if (image.includes('image/png')) imgFormat = 'PNG';
-      
-      const availableWidth = pageWidth - margin * 2;
-      const aspectRatio = img.naturalWidth / img.naturalHeight;
-      let imgWidth = availableWidth;
-      let imgHeight = imgWidth / aspectRatio;
-
-      if (imgHeight > pageHeight * 0.45) {
-        imgHeight = pageHeight * 0.45;
-        imgWidth = imgHeight * aspectRatio;
-      }
-
-      const imgX = (pageWidth - imgWidth) / 2;
-      const imgY = 35;
-
-      // Using explicit format helps jsPDF handle compression correctly
-      doc.addImage(img, imgFormat, imgX, imgY, imgWidth, imgHeight);
-      
-      const textStartY = imgY + imgHeight + 15;
-
-      // Title
-      doc.setFont("times", "bold");
-      doc.setFontSize(18);
-      doc.text(poem.title, pageWidth / 2, textStartY, { align: "center" });
-      
-      // Poem
-      doc.setFont("times", "normal");
-      doc.setFontSize(12);
-      const splitPoem = doc.splitTextToSize(poem.poem, availableWidth);
-      doc.text(splitPoem, pageWidth / 2, textStartY + 10, { align: "center", lineHeightFactor: 1.5 });
-      
-      if (authorName) {
-        doc.setFont("times", "italic");
-        doc.text(`- ${authorName}`, pageWidth - margin, textStartY + 10 + (splitPoem.length * 6) + 10, { align: "right" });
-      }
-
-      doc.save(`${poem.title.replace(/\s/g, '_')}-photo-verse.pdf`);
-      
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      alert(`No se pudo generar el PDF: ${error instanceof Error ? error.message : 'Error desconocido'}`);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-
   return (
     <div className="w-full h-full flex flex-col bg-main-teal overflow-hidden">
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
@@ -549,14 +483,9 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ poem, image, onReset, autho
                     <Download className="mr-2" size={20} /> {isDownloading ? t.generating[language] : t.downloadImage[language]}
                  </ClayButton>
                  
-                 <div className="flex gap-2">
-                    <ClayButton onClick={handleShareText} color="secondary" disabled={!isFinishedTyping} fullWidth className="text-sm px-2">
-                        <Share2 className="mr-1" size={18} /> {t.share[language]}
-                    </ClayButton>
-                    <ClayButton onClick={handleDownloadPdf} color="secondary" disabled={!isFinishedTyping} fullWidth className="text-sm px-2">
-                        <FileText className="mr-1" size={18} /> PDF
-                    </ClayButton>
-                 </div>
+                 <ClayButton onClick={handleShareText} color="secondary" disabled={!isFinishedTyping} fullWidth className="text-sm px-2">
+                    <Share2 className="mr-1" size={18} /> {t.share[language]}
+                 </ClayButton>
                  
                  <ClayButton onClick={onReset} fullWidth className="mt-2">
                     <RefreshCw className="mr-2" size={20} /> {t.createAnother[language]}
