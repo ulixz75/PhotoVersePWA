@@ -74,17 +74,53 @@
   <body class="bg-main-teal">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
+    
+    <!-- Service Worker Registration - MEJORADO -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/service-worker.js')
             .then(registration => {
-              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+              console.log('[SW] Registro exitoso:', registration.scope);
+              
+              // Forzar actualización del service worker
+              registration.update();
+              
+              // Detectar cuando hay nueva versión disponible
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                console.log('[SW] Nueva versión encontrada');
+                
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      console.log('[SW] Nueva versión lista. Recomendado: recargar la página');
+                      // Opcional: Mostrar notificación al usuario
+                      // if (confirm('Nueva versión disponible. ¿Recargar ahora?')) {
+                      //   window.location.reload();
+                      // }
+                    }
+                  });
+                }
+              });
+              
+              // Escuchar mensajes del service worker
+              navigator.serviceWorker.addEventListener('message', event => {
+                console.log('[SW] Mensaje recibido:', event.data);
+              });
+              
+              // Manejar cambios de controller (nuevo SW activado)
+              navigator.serviceWorker.addEventListener('controllerchange', () => {
+                console.log('[SW] Controller cambió, recargando...');
+                window.location.reload();
+              });
             })
             .catch(error => {
-              console.log('ServiceWorker registration failed: ', error);
+              console.error('[SW] Registro falló:', error);
             });
         });
+      } else {
+        console.warn('[SW] Service Workers no soportados en este navegador');
       }
     </script>
   </body>
