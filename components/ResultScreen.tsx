@@ -1,15 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { jsPDF } from 'jspdf';
 import ClayButton from './ClayButton';
 import { Copy, RefreshCw, Download, Share2, Smartphone, Square, Image as ImageIcon, FileText } from 'lucide-react';
 import { Poem, Language, ShareTemplate } from '../types';
 import { t } from '../translations';
-
-
-declare global {
-  interface Window {
-    jspdf: any;
-  }
-}
 
 interface ResultScreenProps {
   poem: Poem | null;
@@ -449,11 +443,6 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ poem, image, onReset, autho
     setIsDownloading(true);
 
     try {
-      if (!window.jspdf) {
-        throw new Error("PDF Library not loaded");
-      }
-      
-      const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
