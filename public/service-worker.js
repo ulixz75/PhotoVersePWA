@@ -1,9 +1,10 @@
-const CACHE_NAME = 'photoverse-cache-v5';
+const CACHE_NAME = 'photoverse-cache-v4'; // Bump version to ensure update
 const URLS_TO_CACHE = [
   // App Shell
   '/',
   '/index.html',
   '/manifest.json',
+
   // Icons
   '/icon-48x48.png',
   '/icon-72x72.png',
@@ -28,39 +29,32 @@ const URLS_TO_CACHE = [
   '/components/ResultScreen.tsx',
   '/components/ClayButton.tsx',
   '/components/SelectionCard.tsx',
-  '/components/GalleryScreen.tsx',
+
   // CDN Resources
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap',
-  'https://esm.sh/jspdf@2.5.1',
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://aistudiocdn.com/@google/genai@^1.20.0',
   'https://aistudiocdn.com/react@^19.1.1',
   'https://aistudiocdn.com/react-dom@^19.1.1',
   'https://aistudiocdn.com/lucide-react@^0.544.0'
 ];
 
-// Instala el service worker y cachea los recursos principales de la aplicación
+// Instala el service worker y cachea los recursos principales de la aplicación.
 self.addEventListener('install', event => {
-  console.log('[SW] Installing service worker...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('[SW] Caching app shell');
+        console.log('Opened cache');
         return cache.addAll(URLS_TO_CACHE);
       })
-      .then(() => {
-        console.log('[SW] Cache populated, skipping waiting');
-        return self.skipWaiting();
-      })
-      .catch(error => {
-        console.error('[SW] Installation failed:', error);
-      })
+      .then(() => self.skipWaiting()) // Force activation
   );
 });
 
-// Intercepta las peticiones de red y responde con los recursos cacheados si están disponibles
+// Intercepta las peticiones de red y responde con los recursos cacheados si están disponibles.
 self.addEventListener('fetch', event => {
-  // Solo cachear peticiones GET
+  // We only want to cache GET requests.
   if (event.request.method !== 'GET') {
     return;
   }
@@ -68,90 +62,59 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
+        // Cache hit - return response
         if (response) {
-          // Cache hit - retornar respuesta cacheada
           return response;
         }
-        
-        // No está en cache - obtener de red
-        return fetch(event.request)
-          .then(networkResponse => {
-            // Verificar respuesta válida
-            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type === 'error') {
+
+        // Not in cache - fetch from network
+        return fetch(event.request).then(
+          networkResponse => {
+            // Check if we received a valid response
+            if (!networkResponse || networkResponse.status !== 200) {
               return networkResponse;
             }
             
-            // Clonar la respuesta
+            // IMPORTANT: Clone the response. A response is a stream
+            // and because we want the browser to consume the response
+            // as well as the cache consuming the response, we need
+            // to clone it so we have two streams.
             const responseToCache = networkResponse.clone();
-            
-            // Cachear la respuesta (sin bloquear)
+
             caches.open(CACHE_NAME)
               .then(cache => {
-                // No cachear llamadas a APIs externas o sospechosas
-                if (!event.request.url.includes('generativelanguage') &&
-                    !event.request.url.includes('shoukigaigoors') && 
-                    !event.request.url.includes('github')) {
-                  cache.put(event.request, responseToCache);
+                // We don't cache calls to the Gemini API
+                if (!event.request.url.includes('generativelanguage')) {
+                    cache.put(event.request, responseToCache);
                 }
-              })
-              .catch(error => {
-                // Silenciar errores de cache (extensiones pueden interferir)
-                console.log('[SW] Cache put failed (expected with extensions):', error.message);
               });
-            
+
             return networkResponse;
-          })
-          .catch(error => {
-            console.error('[SW] Fetch failed:', error);
+          }
+        ).catch(error => {
+            // This is a simplified offline fallback. 
+            // You might want to return a custom offline page here.
+            console.error('Fetching failed:', error);
             throw error;
-          });
+        });
       })
   );
 });
 
-// Activa el service worker y elimina cachés antiguas
+
+// Activa el service worker y elimina cachés antiguas para mantener la aplicación actualizada.
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating service worker...');
   const cacheWhitelist = [CACHE_NAME];
-  
   event.waitUntil(
-    caches.keys()
-      .then(cacheNames => {
-        return Promise.all(
-          cacheNames.map(cacheName => {
-            if (!cacheWhitelist.includes(cacheName)) {
-              console.log('[SW] Deleting old cache:', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      })
-      .then(() => {
-        console.log('[SW] Service worker activated, claiming clients');
-        return self.clients.claim();
-      })
-      .catch(error => {
-        console.error('[SW] Activation failed:', error);
-      })
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => self.clients.claim()) // Take control of all pages
   );
-});
-
-// Manejar mensajes (prevenir errores de extensiones)
-self.addEventListener('message', event => {
-  try {
-    if (event.data && event.data.type === 'SKIP_WAITING') {
-      self.skipWaiting();
-    }
-  } catch (error) {
-    console.log('[SW] Message handling error (expected with extensions):', error.message);
-  }
-});
-
-// Prevenir errores no manejados
-self.addEventListener('error', event => {
-  console.error('[SW] Error:', event.error);
-});
-
-self.addEventListener('unhandledrejection', event => {
-  console.error('[SW] Unhandled rejection:', event.reason);
 });
